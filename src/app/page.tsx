@@ -34,6 +34,8 @@ export default function Home() {
         if (res.ok) {
           const data = await res.json();
           setTopics(data);
+        } else {
+          console.error("Failed to fetch topics: API returned error");
         }
       } catch (err) {
         console.error("Failed to fetch topics:", err);
