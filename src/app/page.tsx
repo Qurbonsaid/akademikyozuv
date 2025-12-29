@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -13,11 +13,37 @@ import {
   Users,
 } from "lucide-react";
 
+interface Topic {
+  _id: string;
+  code: string;
+  title: string;
+}
+
 export default function Home() {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [loadingTopics, setLoadingTopics] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchTopics = async () => {
+      try {
+        const res = await fetch("/api/topics");
+        if (res.ok) {
+          const data = await res.json();
+          setTopics(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch topics:", err);
+      } finally {
+        setLoadingTopics(false);
+      }
+    };
+
+    fetchTopics();
+  }, []);
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "").slice(0, 6);
@@ -44,6 +70,10 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTopicClick = (topicCode: string) => {
+    router.push(`/test/${topicCode}`);
   };
 
   const features = [
@@ -100,10 +130,52 @@ export default function Home() {
             orqali rivojlantiring
           </p>
 
+          {/* Topics List */}
+          {loadingTopics ? (
+            <div className="bg-white rounded-2xl shadow-xl p-8 md:p-10 max-w-3xl mx-auto">
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                <span className="ml-3 text-gray-600">Mavzular yuklanmoqda...</span>
+              </div>
+            </div>
+          ) : topics.length > 0 ? (
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
+                Mavzuni tanlang
+              </h2>
+              <div className="grid md:grid-cols-2 gap-4 mb-8">
+                {topics.map((topic) => (
+                  <button
+                    key={topic._id}
+                    onClick={() => handleTopicClick(topic.code)}
+                    className="bg-white rounded-xl shadow-lg p-6 text-left hover:shadow-xl hover:scale-[1.02] transition-all group"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors">
+                          {topic.title}
+                        </h3>
+                        <p className="text-sm text-gray-500">Kod: {topic.code}</p>
+                      </div>
+                      <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+              
+              {/* Divider */}
+              <div className="flex items-center justify-center my-8">
+                <div className="flex-1 border-t border-gray-300"></div>
+                <span className="px-4 text-sm text-gray-500">yoki</span>
+                <div className="flex-1 border-t border-gray-300"></div>
+              </div>
+            </div>
+          ) : null}
+
           {/* Topic Code Entry */}
           <div className="bg-white rounded-2xl shadow-xl p-8 md:p-10 max-w-lg mx-auto animate-slide-up">
             <h2 className="text-xl font-semibold text-gray-800 mb-2">
-              Testni boshlash
+              {topics.length > 0 ? "Kod bilan kirish" : "Testni boshlash"}
             </h2>
             <p className="text-gray-500 mb-6">
               O&apos;qituvchi bergan 6 xonali mavzu raqamini kiriting
